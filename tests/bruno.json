@@ -1,0 +1,6 @@
+{
+  "version": "1",
+  "name": "Gacha Pull API",
+  "type": "collection",
+  "ignore": ["node_modules", ".git"]
+}

@@ -1,0 +1,38 @@
+meta {
+  name: TC14 - สุ่ม 10 ครั้ง ได้ item ครบ 10 ชิ้นพอดี
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/pull-x10
+  body: json
+  auth: none
+}
+
+script:pre-request {
+  bru.setVar("x1UserId", "x10a" + Math.random().toString(36).substring(2, 10));
+}
+
+body:json {
+  {
+    "user_id": "{{x1UserId}}"
+  }
+}
+
+assert {
+  res.status: eq 200
+}
+
+tests {
+  test("items array has exactly 10 entries", function() {
+    expect(res.getBody().items.length).to.equal(10);
+  });
+  test("every item has item_id, name and a valid rarity", function() {
+    res.getBody().items.forEach(function (it) {
+      expect(it).to.have.property("item_id");
+      expect(it).to.have.property("name");
+      expect(["N", "R", "SR", "SSR"]).to.include(it.rarity);
+    });
+  });
+}

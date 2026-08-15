@@ -1,0 +1,21 @@
+meta {
+  name: TC6 - user_id เป็นภาษาไทย/unicode
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{baseUrl}}/pull
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "user_id": "ผู้เล่น1"
+  }
+}
+
+assert {
+  res.status: eq 422
+}

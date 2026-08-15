@@ -1,0 +1,16 @@
+meta {
+  name: TC24 - pity_threshold และ guarantee_min_rarity ถูกต้อง
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/rates
+  auth: none
+}
+
+assert {
+  res.status: eq 200
+  res.body.pity_threshold: eq 50
+  res.body.pull_x10_guarantee_min_rarity: eq SR
+}

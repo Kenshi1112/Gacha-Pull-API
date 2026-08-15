@@ -1,0 +1,37 @@
+meta {
+  name: TC31a - วนสุ่มจนกว่า pity_count จะถึง 50 จริง (ไม่ใช่วนตายตัว 50 ครั้ง)
+  type: http
+  seq: 3
+}
+
+script:pre-request {
+  if (!bru.getVar("statPityUser")) {
+    bru.setVar("statPityUser", "statpity" + Math.random().toString(36).substring(2, 8));
+    bru.setVar("statPityAttempts", 0);
+  }
+}
+
+post {
+  url: {{baseUrl}}/pull
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "user_id": "{{statPityUser}}"
+  }
+}
+
+script:post-response {
+  const body = res.getBody();
+  const attempts = bru.getVar("statPityAttempts") + 1;
+  bru.setVar("statPityAttempts", attempts);
+  bru.setVar("statPityCurrentCount", body.pity_count);
+
+  if (body.pity_count < 50 && attempts < 3000) {
+    bru.runner.setNextRequest("TC31a - วนสุ่มจนกว่า pity_count จะถึง 50 จริง (ไม่ใช่วนตายตัว 50 ครั้ง)");
+  } else {
+    bru.runner.setNextRequest("TC31b - เช็คว่าครั้งถัดไปหลังครบ 50 ต้องได้ SSR การันตี");
+  }
+}

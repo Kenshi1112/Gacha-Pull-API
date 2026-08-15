@@ -1,0 +1,20 @@
+meta {
+  name: TC7 - ส่ง body ที่ไม่ใช่ JSON ที่ถูกต้อง (ต้องได้ 400 ไม่ใช่ 422)
+  type: http
+  seq: 8
+}
+
+post {
+  url: {{baseUrl}}/pull
+  body: text
+  auth: none
+}
+
+body:text {
+  {not valid json
+}
+
+assert {
+  res.status: eq 400
+  res.body.detail: eq Invalid request body
+}

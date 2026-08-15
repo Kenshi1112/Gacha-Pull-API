@@ -1,0 +1,22 @@
+meta {
+  name: TC5 - user_id มีอักขระพิเศษ
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{baseUrl}}/pull
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "user_id": "abc!@#"
+  }
+}
+
+assert {
+  res.status: eq 422
+  res.body.detail[0].type: eq string_pattern_mismatch
+}

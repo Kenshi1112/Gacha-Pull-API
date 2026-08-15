@@ -1,0 +1,21 @@
+meta {
+  name: TC12 - user_id ยาว 21 ตัวอักษร (เกินเกณฑ์สูงสุด)
+  type: http
+  seq: 13
+}
+
+post {
+  url: {{baseUrl}}/pull
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "user_id": "aaaaaaaaaaaaaaaaaaaaa"
+  }
+}
+
+assert {
+  res.status: eq 422
+}

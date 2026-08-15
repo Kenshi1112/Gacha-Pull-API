@@ -1,0 +1,18 @@
+meta {
+  name: TC25a - เรียกซ้ำได้ค่าเดิมเสมอ: เรียกครั้งที่ 1
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/rates
+  auth: none
+}
+
+script:post-response {
+  bru.setVar("ratesCall1", JSON.stringify(res.getBody()));
+}
+
+assert {
+  res.status: eq 200
+}

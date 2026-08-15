@@ -1,0 +1,23 @@
+meta {
+  name: TC21c - เช็ค pity ทบยอดถูกต้อง: เทียบค่าหลังยิงกับที่คำนวณเอง
+  type: http
+  seq: 9
+}
+
+get {
+  url: {{baseUrl}}/pity/{{x3UserId}}
+  auth: none
+}
+
+tests {
+  test("current_pity_count after the batch matches a manual replay of the 10 rarities", function() {
+    const items = JSON.parse(bru.getVar("x3Items"));
+    let expected = bru.getVar("x3PityBefore");
+    items.forEach(function (it) {
+      expected = it.rarity === "SSR" ? 0 : expected + 1;
+    });
+    const afterBody = res.getBody();
+    expect(afterBody.current_pity_count).to.equal(expected);
+    expect(afterBody.current_pity_count).to.equal(bru.getVar("x3ReportedPity"));
+  });
+}

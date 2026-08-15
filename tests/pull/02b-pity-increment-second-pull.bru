@@ -1,0 +1,34 @@
+meta {
+  name: TC2b - เช็ค pity เพิ่มถูกต้อง: สุ่มครั้งที่ 2 ต้อง +1 (หรือรีเซ็ตเป็น 0 ถ้าได้ SSR)
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/pull
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "user_id": "{{p2UserId}}"
+  }
+}
+
+tests {
+  test("pity_count increments correctly across 2 consecutive pulls", function() {
+    const body = res.getBody();
+    const firstPity = bru.getVar("p2FirstPity");
+    const firstRarity = bru.getVar("p2FirstRarity");
+    let expected;
+    if (body.item.rarity === "SSR") {
+      expected = 0;
+    } else if (firstRarity === "SSR") {
+      expected = 0 + 1; // shouldn't normally happen back-to-back, but keep logic honest
+    } else {
+      expected = firstPity + 1;
+    }
+    expect(body.pity_count).to.equal(expected);
+  });
+}

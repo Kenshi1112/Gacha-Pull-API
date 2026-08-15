@@ -1,0 +1,17 @@
+meta {
+  name: TC23 - ผลรวมเปอร์เซ็นต์ทั้งหมดเท่ากับ 100 พอดี
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/rates
+  auth: none
+}
+
+tests {
+  test("sum of all rarity percentages is 100", function() {
+    const total = res.getBody().rates.reduce(function (sum, e) { return sum + e.percentage; }, 0);
+    expect(total).to.equal(100);
+  });
+}

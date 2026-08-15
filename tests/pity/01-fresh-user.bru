@@ -1,0 +1,21 @@
+meta {
+  name: TC26 - user ใหม่ที่ไม่เคยสุ่มมาก่อน ได้ค่าเริ่มต้นเป็นศูนย์
+  type: http
+  seq: 1
+}
+
+script:pre-request {
+  bru.setVar("pityFreshUser", "never" + Math.random().toString(36).substring(2, 10));
+}
+
+get {
+  url: {{baseUrl}}/pity/{{pityFreshUser}}
+  auth: none
+}
+
+assert {
+  res.status: eq 200
+  res.body.current_pity_count: eq 0
+  res.body.total_pulls: eq 0
+  res.body.pulls_until_pity: eq 50
+}

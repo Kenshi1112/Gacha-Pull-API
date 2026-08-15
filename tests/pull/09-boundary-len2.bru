@@ -1,0 +1,21 @@
+meta {
+  name: TC9 - user_id ยาว 2 ตัวอักษร (ต่ำกว่าเกณฑ์ขั้นต่ำ)
+  type: http
+  seq: 10
+}
+
+post {
+  url: {{baseUrl}}/pull
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "user_id": "ab"
+  }
+}
+
+assert {
+  res.status: eq 422
+}

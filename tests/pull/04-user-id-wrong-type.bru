@@ -1,0 +1,21 @@
+meta {
+  name: TC4 - user_id เป็นตัวเลขแทนที่จะเป็นข้อความ
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/pull
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "user_id": 123
+  }
+}
+
+assert {
+  res.status: eq 422
+}

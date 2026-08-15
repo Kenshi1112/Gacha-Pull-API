@@ -1,0 +1,27 @@
+meta {
+  name: TC31b - เช็คว่าครั้งถัดไปหลังครบ 50 ต้องได้ SSR การันตี
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/pull
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "user_id": "{{statPityUser}}"
+  }
+}
+
+tests {
+  test("the pull right after pity_count hits 50 is always SSR, pity_triggered, and resets to 0", function() {
+    const body = res.getBody();
+    expect(bru.getVar("statPityCurrentCount")).to.equal(50);
+    expect(body.item.rarity).to.equal("SSR");
+    expect(body.pity_triggered).to.equal(true);
+    expect(body.pity_count).to.equal(0);
+  });
+}

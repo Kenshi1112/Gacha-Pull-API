@@ -1,0 +1,41 @@
+meta {
+  name: TC27a - วนสุ่มจนกว่าจะได้ผลไม่ใช่ SSR ติดกัน 5 ครั้ง
+  type: http
+  seq: 2
+}
+
+script:pre-request {
+  if (!bru.getVar("pity5User")) {
+    bru.setVar("pity5User", "five" + Math.random().toString(36).substring(2, 10));
+    bru.setVar("pity5CleanStreak", 0);
+    bru.setVar("pity5Attempts", 0);
+  }
+}
+
+post {
+  url: {{baseUrl}}/pull
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "user_id": "{{pity5User}}"
+  }
+}
+
+script:post-response {
+  const body = res.getBody();
+  const attempts = bru.getVar("pity5Attempts") + 1;
+  bru.setVar("pity5Attempts", attempts);
+
+  let streak = bru.getVar("pity5CleanStreak");
+  streak = (body.item.rarity === "SSR") ? 0 : streak + 1;
+  bru.setVar("pity5CleanStreak", streak);
+
+  if (streak < 5 && attempts < 60) {
+    bru.runner.setNextRequest("TC27a - วนสุ่มจนกว่าจะได้ผลไม่ใช่ SSR ติดกัน 5 ครั้ง");
+  } else {
+    bru.runner.setNextRequest("TC27b - เช็คสถานะ pity หลังสุ่มไม่ได้ SSR ติดกัน 5 ครั้ง");
+  }
+}

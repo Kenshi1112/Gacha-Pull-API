@@ -1,0 +1,16 @@
+meta {
+  name: TC25b - เรียกซ้ำได้ค่าเดิมเสมอ: เรียกครั้งที่ 2 ต้องตรงกับครั้งแรก
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/rates
+  auth: none
+}
+
+tests {
+  test("second call returns an identical body to the first (no side effects)", function() {
+    expect(JSON.stringify(res.getBody())).to.equal(bru.getVar("ratesCall1"));
+  });
+}

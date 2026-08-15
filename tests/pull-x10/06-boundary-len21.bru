@@ -1,0 +1,21 @@
+meta {
+  name: TC20 - user_id ยาว 21 ตัว (เกินเกณฑ์)
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{baseUrl}}/pull-x10
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "user_id": "aaaaaaaaaaaaaaaaaaaaa"
+  }
+}
+
+assert {
+  res.status: eq 422
+}

@@ -1,0 +1,19 @@
+meta {
+  name: TC18 - ส่ง body ที่ไม่ใช่ JSON ที่ถูกต้อง
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/pull-x10
+  body: text
+  auth: none
+}
+
+body:text {
+  {not valid json
+}
+
+assert {
+  res.status: eq 400
+}

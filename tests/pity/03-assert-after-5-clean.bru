@@ -1,0 +1,16 @@
+meta {
+  name: TC27b - เช็คสถานะ pity หลังสุ่มไม่ได้ SSR ติดกัน 5 ครั้ง
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/pity/{{pity5User}}
+  auth: none
+}
+
+tests {
+  test("current_pity_count is 5 after 5 consecutive non-SSR pulls", function() {
+    expect(res.getBody().current_pity_count).to.equal(5);
+  });
+}

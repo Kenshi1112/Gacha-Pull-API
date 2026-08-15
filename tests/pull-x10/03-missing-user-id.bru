@@ -1,0 +1,19 @@
+meta {
+  name: TC17 - ไม่ส่ง user_id
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/pull-x10
+  body: json
+  auth: none
+}
+
+body:json {
+  {}
+}
+
+assert {
+  res.status: eq 422
+}

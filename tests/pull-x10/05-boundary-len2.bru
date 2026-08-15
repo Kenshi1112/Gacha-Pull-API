@@ -1,0 +1,21 @@
+meta {
+  name: TC19 - user_id ยาว 2 ตัว (ต่ำกว่าเกณฑ์)
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/pull-x10
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "user_id": "ab"
+  }
+}
+
+assert {
+  res.status: eq 422
+}

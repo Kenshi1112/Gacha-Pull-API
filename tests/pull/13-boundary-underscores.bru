@@ -1,0 +1,21 @@
+meta {
+  name: TC13 - user_id เป็น underscore ล้วน
+  type: http
+  seq: 14
+}
+
+post {
+  url: {{baseUrl}}/pull
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "user_id": "___"
+  }
+}
+
+assert {
+  res.status: eq 200
+}

@@ -1,0 +1,35 @@
+meta {
+  name: TC16 - guarantee_triggered เป็น true เฉพาะตอนที่ต้องบังคับจริงๆ
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/pull-x10
+  body: json
+  auth: none
+}
+
+script:pre-request {
+  bru.setVar("x2UserId", "x10b" + Math.random().toString(36).substring(2, 10));
+}
+
+body:json {
+  {
+    "user_id": "{{x2UserId}}"
+  }
+}
+
+tests {
+  test("guarantee_triggered is true only when the first 9 had no SR+", function() {
+    const body = res.getBody();
+    const first9 = body.items.slice(0, 9);
+    const hasNatural = first9.some(function (it) { return it.rarity === "SR" || it.rarity === "SSR"; });
+    if (!hasNatural) {
+      expect(body.guarantee_triggered).to.equal(true);
+      expect(["SR", "SSR"]).to.include(body.items[9].rarity);
+    } else {
+      expect(body.guarantee_triggered).to.equal(false);
+    }
+  });
+}

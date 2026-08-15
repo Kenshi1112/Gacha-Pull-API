@@ -1,0 +1,17 @@
+meta {
+  name: TC15b - เช็คว่าการันตี SR+ ไม่เคยพลาดเลยตลอดการรัน
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/rates
+  auth: none
+}
+
+tests {
+  test("pull-x10 SR+ guarantee held on every single run (0 violations)", function() {
+    expect(bru.getVar("x10BulkViolations")).to.equal(0);
+    expect(bru.getVar("x10BulkRuns")).to.equal(bru.getVar("x10BulkTarget"));
+  });
+}

@@ -1,0 +1,38 @@
+meta {
+  name: TC1 - สุ่ม 1 ครั้งด้วย user_id ที่ถูกต้อง (user ใหม่)
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/pull
+  body: json
+  auth: none
+}
+
+script:pre-request {
+  bru.setVar("p1UserId", "qa" + Math.random().toString(36).substring(2, 10));
+}
+
+body:json {
+  {
+    "user_id": "{{p1UserId}}"
+  }
+}
+
+assert {
+  res.status: eq 200
+  res.body.item.rarity: isDefined
+  res.body.pity_triggered: isDefined
+}
+
+tests {
+  test("rarity is one of N/R/SR/SSR", function() {
+    const body = res.getBody();
+    expect(["N", "R", "SR", "SSR"]).to.include(body.item.rarity);
+  });
+  test("pity_count is 0 or 1 for a first pull", function() {
+    const body = res.getBody();
+    expect([0, 1]).to.include(body.pity_count);
+  });
+}

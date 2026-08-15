@@ -1,0 +1,17 @@
+meta {
+  name: TC28 - pulls_until_pity = pity_threshold - current_pity_count เสมอ
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/pity/{{pity5User}}
+  auth: none
+}
+
+tests {
+  test("pulls_until_pity formula holds", function() {
+    const body = res.getBody();
+    expect(body.pulls_until_pity).to.equal(body.pity_threshold - body.current_pity_count);
+  });
+}

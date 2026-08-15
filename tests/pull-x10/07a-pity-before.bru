@@ -1,0 +1,23 @@
+meta {
+  name: TC21a - เช็ค pity ทบยอดถูกต้อง: อ่านค่า pity ก่อนยิง x10
+  type: http
+  seq: 7
+}
+
+script:pre-request {
+  bru.setVar("x3UserId", "x10c" + Math.random().toString(36).substring(2, 10));
+}
+
+get {
+  url: {{baseUrl}}/pity/{{x3UserId}}
+  auth: none
+}
+
+script:post-response {
+  bru.setVar("x3PityBefore", res.getBody().current_pity_count);
+}
+
+assert {
+  res.status: eq 200
+  res.body.current_pity_count: eq 0
+}

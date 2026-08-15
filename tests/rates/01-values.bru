@@ -1,0 +1,22 @@
+meta {
+  name: TC22 - คืนค่า rarity ครบ 4 ระดับ ตัวเลขถูกต้อง
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/rates
+  auth: none
+}
+
+assert {
+  res.status: eq 200
+}
+
+tests {
+  test("rarity table matches N=60, R=27, SR=10, SSR=3", function() {
+    const rates = {};
+    res.getBody().rates.forEach(function (e) { rates[e.rarity] = e.percentage; });
+    expect(rates).to.deep.equal({ N: 60, R: 27, SR: 10, SSR: 3 });
+  });
+}

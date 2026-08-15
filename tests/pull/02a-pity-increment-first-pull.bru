@@ -1,0 +1,31 @@
+meta {
+  name: TC2a - เช็ค pity เพิ่มถูกต้อง: สุ่มครั้งที่ 1
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/pull
+  body: json
+  auth: none
+}
+
+script:pre-request {
+  bru.setVar("p2UserId", "qa2" + Math.random().toString(36).substring(2, 10));
+}
+
+body:json {
+  {
+    "user_id": "{{p2UserId}}"
+  }
+}
+
+script:post-response {
+  const body = res.getBody();
+  bru.setVar("p2FirstPity", body.pity_count);
+  bru.setVar("p2FirstRarity", body.item.rarity);
+}
+
+assert {
+  res.status: eq 200
+}

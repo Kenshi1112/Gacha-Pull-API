@@ -1,0 +1,14 @@
+meta {
+  name: TC30b - user_id ใน path ยาว 21 ตัว (นอกช่วงที่รับได้)
+  type: http
+  seq: 7
+}
+
+get {
+  url: {{baseUrl}}/pity/aaaaaaaaaaaaaaaaaaaaa
+  auth: none
+}
+
+assert {
+  res.status: eq 422
+}

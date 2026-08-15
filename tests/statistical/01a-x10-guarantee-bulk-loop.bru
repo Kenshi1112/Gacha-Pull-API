@@ -1,0 +1,43 @@
+meta {
+  name: TC15a - วนยิง pull-x10 จำนวนมาก นับจำนวนครั้งที่การันตี SR+ พลาด
+  type: http
+  seq: 1
+}
+
+script:pre-request {
+  if (bru.getVar("x10BulkRuns") === undefined) {
+    bru.setVar("x10BulkRuns", 0);
+    bru.setVar("x10BulkViolations", 0);
+    bru.setVar("x10BulkTarget", 150);
+  }
+  bru.setVar("x10BulkUser", "bulk" + Math.random().toString(36).substring(2, 10));
+}
+
+post {
+  url: {{baseUrl}}/pull-x10
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "user_id": "{{x10BulkUser}}"
+  }
+}
+
+script:post-response {
+  const body = res.getBody();
+  const hasGuarantee = body.items.some(function (it) { return it.rarity === "SR" || it.rarity === "SSR"; });
+  if (!hasGuarantee) {
+    bru.setVar("x10BulkViolations", bru.getVar("x10BulkViolations") + 1);
+  }
+
+  const runs = bru.getVar("x10BulkRuns") + 1;
+  bru.setVar("x10BulkRuns", runs);
+
+  if (runs < bru.getVar("x10BulkTarget")) {
+    bru.runner.setNextRequest("TC15a - วนยิง pull-x10 จำนวนมาก นับจำนวนครั้งที่การันตี SR+ พลาด");
+  } else {
+    bru.runner.setNextRequest("TC15b - เช็คว่าการันตี SR+ ไม่เคยพลาดเลยตลอดการรัน");
+  }
+}

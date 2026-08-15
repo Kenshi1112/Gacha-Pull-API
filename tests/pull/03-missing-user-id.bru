@@ -1,0 +1,21 @@
+meta {
+  name: TC3 - ไม่ส่ง user_id เลย
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/pull
+  body: json
+  auth: none
+}
+
+body:json {
+  {}
+}
+
+assert {
+  res.status: eq 422
+  res.body.detail[0].loc[1]: eq user_id
+  res.body.detail[0].type: eq missing
+}

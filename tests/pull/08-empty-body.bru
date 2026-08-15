@@ -1,0 +1,15 @@
+meta {
+  name: TC8 - ไม่ส่ง body เลย
+  type: http
+  seq: 9
+}
+
+post {
+  url: {{baseUrl}}/pull
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 422
+}

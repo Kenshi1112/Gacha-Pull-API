@@ -1,0 +1,26 @@
+meta {
+  name: TC21b - เช็ค pity ทบยอดถูกต้อง: ยิง x10
+  type: http
+  seq: 8
+}
+
+post {
+  url: {{baseUrl}}/pull-x10
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "user_id": "{{x3UserId}}"
+  }
+}
+
+script:post-response {
+  bru.setVar("x3Items", JSON.stringify(res.getBody().items));
+  bru.setVar("x3ReportedPity", res.getBody().pity_count);
+}
+
+assert {
+  res.status: eq 200
+}

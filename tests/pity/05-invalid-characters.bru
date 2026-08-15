@@ -1,0 +1,14 @@
+meta {
+  name: TC29 - user_id ใน path มีอักขระต้องห้าม
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/pity/bad-id!
+  auth: none
+}
+
+assert {
+  res.status: eq 422
+}
