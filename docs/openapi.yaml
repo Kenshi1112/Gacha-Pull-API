@@ -1,0 +1,363 @@
+# Gacha Pull API — OpenAPI Spec
+
+# ระบบสุ่มาชา มี 4 endpoint
+#   1. POST /pull        -> สุ่มกาชา 1 ครั้ง
+#   2. POST /pull-x10    -> สุ่มกาชา 10 ครั้งรวด (การันตี SR)
+#   3. GET  /rates        -> ดูอัตราดรอปของแต่ละ rarity
+#   4. GET  /pity/{user_id} -> ดูสถานะ pity counter ของ user คนนั้น
+
+openapi: 3.0.3
+info:
+  title: Gacha Pull API
+  description: >
+    A backend service for a gacha-style pull system — built to answer the
+    question nobody should ask at 3 AM: "What if I pull one more time?"
+    Supports single and multi pulls, drop-rate lookup, and per-player pity
+    tracking. In-memory state included. Regret not included.
+  version: "1.0.0"
+  contact:
+    name: Gacha Enjoyer
+servers:
+  - url: http://localhost:8000
+    description: Local development server
+
+tags:
+  - name: Pull
+    description: Perform gacha pulls
+  - name: Rates
+    description: Drop rate information
+  - name: Pity
+    description: Pity (guarantee) counter tracking
+
+
+# PATHS — endpoint 4 ตัว
+paths:
+  # ENDPOINT 1: POST /pull
+  # สุ่มกาชา 1 ครั้งให้ user ตาม rate ที่กำหนด (ดูตารางเต็มที่ /rates)
+  # ถ้า pity counter ของ user ถึง 50 พอดี (สุ่มติดกัน 50 ครั้งไม่เคยได้ SSR)
+  # ผลของครั้งนี้จะถูกบังคับให้เป็น SSR เสมอ แล้วรีเซ็ตตัวนับกลับเป็น 0
+  /pull:
+    post:
+      tags: [Pull]
+      operationId: pullSingle
+      summary: Perform a single gacha pull
+      description: >
+        One pull, one shot at glory (or another dupe). Rolls exactly 1 item off the drop table. 
+        Hit 50 pulls without an SSR and hard pity kicks in — guaranteed SSR, streak resets to 0. No copium required.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PullRequest'
+            examples:
+              default:
+                value:
+                  user_id: "player_001"
+      responses:
+        '200':
+          description: Pull result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PullResponse'
+        '400':
+          description: Invalid request body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (e.g. user_id fails format rules)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationErrorResponse'
+
+
+  # ENDPOINT 2: POST /pull-x10
+  # สุ่มกาชา 10 ครั้งรวด
+  # "การันตี SR" ของระบบนี้ = ใน 10 ใบต้องมีอย่างน้อย 1 ใบ SR
+  # SR ขึ้นไป (SR หรือ SSR) ถ้าสุ่มปกติ 9 ใบแรกไม่มีเลย ใบที่ 10 จะออก
+  # pity counter ของแต่ละใบใน 10 ใบนี้ยังนับต่อเนื่องแบบเดียวกับ /pull
+
+  /pull-x10:
+    post:
+      tags: [Pull]
+      operationId: pullTenTimes
+      summary: Perform 10 gacha pulls at once
+      description: >
+        The multi. Ten pulls, guaranteed at least 1 SR+ in the batch
+        no walking away from a banner completely empty-handed. 
+        If the first 9 whiff, pull #10 is forced to SR or better. Pity still counts across all 10.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PullRequest'
+            examples:
+              default:
+                value:
+                  user_id: "player_001"
+      responses:
+        '200':
+          description: 10-pull result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PullX10Response'
+        '400':
+          description: Invalid request body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (e.g. user_id fails format rules)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationErrorResponse'
+
+  # ENDPOINT 3: GET /rates
+  # แค่คืนตารางอัตราดรอปแบบ static ไม่ได้สุ่ม
+  # ที่ test เคสอื่นๆ (เช่นเทสสัดส่วนดรอปจากการรันหลายพันครั้ง) เอาไปเทียบ
+
+  /rates:
+    get:
+      tags: [Rates]
+      operationId: getRates
+      summary: Get drop rates for each rarity
+      description: >
+        The rate sheet — the thing everyone screenshots and argues about online.
+        Except this one's actually accurate, because it's tested against the real drop table.
+      responses:
+        '200':
+          description: Current drop rate table
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RatesResponse'
+              examples:
+                default:
+                  value:
+                    rates:
+                      - rarity: SSR
+                        percentage: 3
+                      - rarity: SR
+                        percentage: 10
+                      - rarity: R
+                        percentage: 27
+                      - rarity: N
+                        percentage: 60
+                    pity_threshold: 50
+                    pull_x10_guarantee_min_rarity: SR
+
+
+  # ENDPOINT 4
+  # ดูสถานะ pity counter ปัจจุบันของ user คนนั้น
+  # user_id ที่ไม่เคยสุ่มมาก่อน = ถือเป็น user ใหม่ ได้ค่าเริ่มต้นทั้งหมด
+
+  /pity/{user_id}:
+    get:
+      tags: [Pity]
+      operationId: getPityStatus
+      summary: Get a user's current pity status
+      description: >
+        Your pity tracker. Shows how deep into the dry streak you are and how many pulls left until hard pity bails you out.
+        New player? Starts at zero no need to go broke just to check.
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          description: Unique identifier of the player. 3-20 chars, alphanumeric and underscores only.
+          schema:
+            type: string
+            pattern: '^[a-zA-Z0-9_]{3,20}$'
+          example: player_001
+      responses:
+        '200':
+          description: Pity status for the user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PityResponse'
+        '422':
+          description: Validation error (e.g. user_id fails format rules)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationErrorResponse'
+
+components:
+  schemas:
+
+    # ระบบ rarity  มี 4 ระดับ
+    #   N   (Normal)      60%
+    #   R   (Rare)        27%
+    #   SR  (Super Rare)  10%
+    #   SSR (Super Special Rare) 3%
+
+    Rarity:
+      type: string
+      enum: [N, R, SR, SSR]
+      description: Item rarity tier, from most common (N) to rarest (SSR).
+
+    Item:
+      type: object
+      required: [item_id, name, rarity]
+      properties:
+        item_id:
+          type: string
+          example: "itm_ssr_001"
+        name:
+          type: string
+          example: "Phoenix Blade"
+        rarity:
+          $ref: '#/components/schemas/Rarity'
+
+    # ใช้เป็น request body ของทั้ง /pull และ /pull-x10 มีแค่ user_id
+    PullRequest:
+      type: object
+      required: [user_id]
+      properties:
+        user_id:
+          type: string
+          pattern: '^[a-zA-Z0-9_]{3,20}$'
+          description: Unique identifier of the player. 3-20 chars, alphanumeric and underscores only.
+          example: player_001
+
+    # ผลลัพธ์ของ POST /pull — สุ่มมาได้ 1 ไอเทม + สถานะ pity ล่าสุด
+    PullResponse:
+      type: object
+      required: [user_id, item, pity_count, pity_triggered]
+      properties:
+        user_id:
+          type: string
+          example: player_001
+        item:
+          $ref: '#/components/schemas/Item'
+        pity_count:
+          type: integer
+          minimum: 0
+          maximum: 50
+          description: Consecutive pulls since last SSR, AFTER this pull (0 if this pull was/reset to SSR).
+          example: 12
+        pity_triggered:
+          type: boolean
+          description: True if this specific pull was forced to SSR by the pity system.
+          example: false
+
+    # ผลลัพธ์ของ POST /pull-x10 0eo;o 10 ไอเทมพอดี
+    # การันตี SR+ หรือเปล่า
+    PullX10Response:
+      type: object
+      required: [user_id, items, guarantee_triggered, pity_count]
+      properties:
+        user_id:
+          type: string
+          example: player_001
+        items:
+          type: array
+          minItems: 10
+          maxItems: 10
+          items:
+            $ref: '#/components/schemas/Item'
+        guarantee_triggered:
+          type: boolean
+          description: True if the SR+ guarantee had to force one of the 10 results.
+          example: true
+        pity_count:
+          type: integer
+          minimum: 0
+          maximum: 50
+          description: Consecutive pulls since last SSR, AFTER all 10 pulls in this batch.
+          example: 4
+
+    # ข้อมูล 1 แถวของตารางอัตราดรอป เช่น {rarity: "SSR", percentage: 3}
+    RateEntry:
+      type: object
+      required: [rarity, percentage]
+      properties:
+        rarity:
+          $ref: '#/components/schemas/Rarity'
+        percentage:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          example: 3
+
+    # ผลลัพธ์ของ GET /rates — ตาราง rate ครบ 4 rarity + กติกา pity/guarantee
+    RatesResponse:
+      type: object
+      required: [rates, pity_threshold, pull_x10_guarantee_min_rarity]
+      properties:
+        rates:
+          type: array
+          items:
+            $ref: '#/components/schemas/RateEntry'
+        pity_threshold:
+          type: integer
+          example: 50
+          description: Number of consecutive non-SSR pulls that triggers hard pity.
+        pull_x10_guarantee_min_rarity:
+          $ref: '#/components/schemas/Rarity'
+
+    # ผลลัพธ์ของ GET /pity/{user_id} — สถานะ pity counter ของ user คนนั้น
+    # ตอนนี้ เทียบกับเพดานกาชา และเหลืออีกกี่ครั้งถึงจะการันตี SSR
+    PityResponse:
+      type: object
+      required: [user_id, current_pity_count, pity_threshold, pulls_until_pity, total_pulls]
+      properties:
+        user_id:
+          type: string
+          example: player_001
+        current_pity_count:
+          type: integer
+          minimum: 0
+          maximum: 50
+          example: 37
+        pity_threshold:
+          type: integer
+          example: 50
+        pulls_until_pity:
+          type: integer
+          minimum: 0
+          maximum: 50
+          description: pity_threshold - current_pity_count
+          example: 13
+        total_pulls:
+          type: integer
+          minimum: 0
+          description: Total lifetime pulls made by this user (single + x10 combined).
+          example: 142
+
+    # รูปแบบ error เช่น body ไม่ใช่ JSON ที่ถูกต้อง
+    ErrorResponse:
+      type: object
+      required: [detail]
+      properties:
+        detail:
+          type: string
+          example: "Invalid request body"
+
+    # รูปแบบ error ของ FastAPI ตอน validation ไม่ผ่าน (422) เช่น user_id สั้นเกินไป มีตัวอัษรพิเศษ
+    ValidationErrorResponse:
+      type: object
+      required: [detail]
+      properties:
+        detail:
+          type: array
+          items:
+            type: object
+            properties:
+              loc:
+                type: array
+                items:
+                  type: string
+              msg:
+                type: string
+              type:
+                type: string
