@@ -11,16 +11,16 @@
 
 | Method | Path | ทำอะไร |
 |---|---|---|
-| `POST` | `/pull` | สุ่มไอเทม 1 ครั้ง |
-| `POST` | `/pull-x10` | สุ่มไอเทม 10 ครั้งรวด — การันตีว่าใน 10 ใบต้องมี SR ขึ้นไปอย่างน้อย 1 ใบ |
-| `GET` | `/rates` | ดูอัตราดรอปของแต่ละ rarity (N/R/SR/SSR) |
-| `GET` | `/pity/{user_id}` | ดูว่า user คนนั้นสุ่มติดกันมากี่ครั้งแล้วโดยยังไม่ได้ SSR |
+| `POST` | `/pull` | สุ่มกาชา 1 ครั้ง |
+| `POST` | `/pull-x10` | สุ่มกาชา 10 ครั้งรวด — การันตีว่าใน 10 ใบต้องมี SR ขึ้นไปอย่างน้อย 1 ใบ |
+| `GET` | `/rates` | ดู gacha drop rate ของแต่ละ rarity (N/R/SR/SSR) |
+| `GET` | `/pity/{user_id}` | ดูว่า user คนนั้นเกลือติดกันกี่โรลแล้วโดยยังไม่ได้ SSR |
 
 **กติกาที่ตั้งไว้:**
 - อัตราดรอป: N 60% / R 27% / SR 10% / SSR 3%
 - Pity: สุ่มติดกัน 50 ครั้งไม่ได้ SSR → ครั้งถัดไปการันตี SSR ทันที แล้วรีเซ็ตตัวนับ
-- State ทั้งหมดเก็บแบบ in-memory (ไม่มี database จริง) — restart server แล้วข้อมูลหายหมด ตั้งใจให้เป็นแบบนี้เพื่อเน้นที่การเทส ไม่ใช่ระบบ production จริง
-
+- State ทั้งหมดเก็บแบบ in-memory
+  
 ตัวอย่างการเรียกใช้งานจริง:
 
 ```bash
@@ -34,7 +34,7 @@ curl -X POST http://localhost:8000/pull -H "Content-Type: application/json" -d '
 ## Tech Stack
 
 - **FastAPI** (Python) — ตัว API
-- **OpenAPI 3.0** — เขียน spec เองก่อนเขียนโค้ด (spec-first)
+- **OpenAPI 3.0** — เขียน spec ก่อนเขียนโค้ด (spec-first)
 - **Bruno + Bruno CLI** — automated API testing
 
 ## โครงสร้างโปรเจกต์
