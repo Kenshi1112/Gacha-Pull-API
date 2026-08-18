@@ -3,7 +3,7 @@
 > A backend service for a gacha-style pull system — built to answer the question nobody should ask at 3 AM: "What if I pull one more time?"
 > Supports single and multi pulls, drop-rate lookup, and per-player pity tracking. In-memory state included. Regret not included.
 
-โปรเจกต์นี้คือ **ระบบสุ่มกาชาจำลอง** (mock gacha pull system) เขียน API spec ก่อนแล้วค่อยเขียนโค้ดตาม (spec-first) พร้อมชุดเทสทั้งแบบ manual test case และ automated test ด้วย Bruno
+โปรเจกต์นี้คือ **ระบบสุ่มกาชาจำลอง** (mock gacha pull system) เขียน API spec ก่อนแล้วค่อยเขียนโค้ดตาม (spec-first) พร้อมชุดเทสทั้งแบบ manual test case, automated test ด้วย Bruno และ load test ด้วย JMeter
 
 ## ระบบทำอะไรได้บ้าง
 
@@ -36,6 +36,7 @@ curl -X POST http://localhost:8000/pull -H "Content-Type: application/json" -d '
 - **FastAPI** (Python) — ตัว API
 - **OpenAPI 3.0** — เขียน spec ก่อนเขียนโค้ด (spec-first)
 - **Bruno + Bruno CLI** — automated API testing
+- **Apache JMeter** — load testing
 
 ## โครงสร้างโปรเจกต์
 
@@ -46,12 +47,16 @@ Gacha_API/
 ├── docs/
 │   ├── openapi.yaml          # API spec แบบ spec-first
 │   └── Test_Case.xlsx       # manual test case 31 เคส + ผลรันจริง + methodology
-└── tests/                    # Bruno collection — automated test ตรงกับทุกเคสใน Test_Case.xlsx
-    ├── pull/
-    ├── pull-x10/
-    ├── rates/
-    ├── pity/
-    └── statistical/
+├── tests/                     # Bruno collection — automated test ตรงกับทุกเคสใน Test_Case.xlsx
+│   ├── pull/
+│   ├── pull-x10/
+│   ├── rates/
+│   ├── pity/
+│   └── statistical/
+└── perf/                     # JMeter — load test หา concurrent user limit
+    ├── gacha_load_test.jmx
+    ├── REPORT.md              # สรุปผล + ตารางเทียบแต่ละ load level
+    └── results/               # raw CSV ผลรันแต่ละรอบ
 ```
 
 ## วิธีรันเอง
@@ -85,6 +90,15 @@ cd tests
 bru run . --env Local -r
 ```
 
+## วิธีเทสด้วย JMeter (Load Test)
+
+1. เปิด JMeter → File → Open → เลือก `perf/gacha_load_test.jmx`
+2. ต้องรัน server (ขั้นตอนด้านบน) ทิ้งไว้ก่อนเสมอ
+3. ในไฟล์มี 2 Thread Group: `Thread Group` (functional, ปิดไว้เป็น disabled) กับ `Load Test` (enabled) — ปรับ Number of Threads ตามจำนวน concurrent users ที่อยากทดสอบแล้วกด Run
+4. ดูผลที่ Aggregate Report หรือ export เป็น CSV เก็บไว้ที่ `perf/results/`
+
+สรุปผล + ตารางเทียบแต่ละ load level ดูได้ที่ [`perf/REPORT.md`](./perf/REPORT.md) — สั้นๆ คือระบบรับ concurrent users ได้จริงประมาณ **150-200 users** (throughput ~280 req/sec) ก่อน performance จะเริ่มแย่ลงอย่างมีนัยสำคัญ
+
 ## สรุปผลเทส
 
 ทดสอบไว้ทั้งหมด **31 เคส** แบ่งเป็น Positive / Negative / Boundary / Statistical ครอบคลุมทั้ง 4 endpoint — รายละเอียดเต็มดูได้ที่ `docs/Test_Case.xlsx` (มีทั้ง Expected Result, Actual Result, และเหตุผลของแต่ละการตัดสินใจในการออกแบบเทส เช่น ทำไมถึงไม่ใช้ RNG seed)
@@ -96,4 +110,5 @@ bru run . --env Local -r
 - Concurrency / หลาย request พร้อมกันของ user เดียวกัน (ไม่มี lock ป้องกัน)
 - Persistence ข้ามการ restart server
 - Authentication / Authorization
-- Load/performance testing
+- หา hard breaking point ที่ error % เริ่ม > 0% จริง (เทสไปถึง 500 concurrent users ยังไม่เจอ error เลย ดู [`perf/REPORT.md`](./perf/REPORT.md))
+- Soak/Endurance test (รันโหลดต่อเนื่องยาวๆ ดู memory leak จาก in-memory state)
